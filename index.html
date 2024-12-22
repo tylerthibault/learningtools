@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards App</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="scoreboard">
+        <h2>Scoreboard</h2>
+        <p>
+            Correct answers: <span id="correctCount">0</span>
+        </p>
+        <p>
+            Incorrect answers: <span id="incorrectCount">0</span>
+        </p>
+    </div>
+    <div class="container">
+        <h1>Flashcards</h1>
+        <div class="file-input-section">
+            <input type="file" id="fileInput" accept=".csv,.json">
+            <p>Upload a CSV or JSON file containing flashcards</p>
+        </div>
+        
+        <div class="flashcard-container" id="flashcardContainer">
+            <div class="flashcard" id="currentCard">
+                <div class="flashcard-inner">
+                    <div class="flashcard-front">
+                        <div class="card-stats">
+                            <span class="correct-count">✓ <span id="cardCorrectCount">0</span></span>
+                            <span class="incorrect-count">✗ <span id="cardIncorrectCount">0</span></span>
+                        </div>
+                        <p id="frontText">Upload a file to start</p>
+                    </div>
+                    <div class="flashcard-back">
+                        <div class="card-stats">
+                            <span class="correct-count">✓ <span id="cardCorrectCountBack">0</span></span>
+                            <span class="incorrect-count">✗ <span id="cardIncorrectCountBack">0</span></span>
+                        </div>
+                        <p id="backText"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls-group">
+            <div class="controls">
+                <button id="flipBtn">Flip</button>
+                <button id="nextBtn">Next</button>
+            </div>
+            <div>
+                <button id="correctBtn">Correct</button>
+                <button id="seenBtn">Mark as Seen</button>
+                <button id="incorrectBtn" style="display: none;">Incorrect</button>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
