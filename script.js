@@ -5,6 +5,52 @@ let CURRENT_SIDE = 0;
 let CURRENT_CARD_INDEX = -1;
 let SHOW_MARK_AS_SEEN = true; // Default setting
 
+// Load saved data on startup
+document.addEventListener('DOMContentLoaded', function() {
+    loadSavedData();
+});
+
+// Local Storage Functions
+function saveToLocalStorage() {
+    const data = {
+        flashcards: FLASHCARDS,
+        settings: {
+            showMarkAsSeen: SHOW_MARK_AS_SEEN
+        }
+    };
+    localStorage.setItem('flashcardData', JSON.stringify(data));
+}
+
+function loadSavedData() {
+    const savedData = localStorage.getItem('flashcardData');
+    if (savedData) {
+        const data = JSON.parse(savedData);
+        FLASHCARDS = data.flashcards;
+        SHOW_MARK_AS_SEEN = data.settings.showMarkAsSeen;
+        
+        // Update UI
+        document.getElementById('markAsSeenToggle').checked = SHOW_MARK_AS_SEEN;
+        if (FLASHCARDS.length > 0) {
+            showFlashcardUI();
+            selectAndDisplayNextCard();
+        }
+    }
+}
+
+function clearSavedData() {
+    localStorage.removeItem('flashcardData');
+    FLASHCARDS = [];
+    CURRENT_CARD_INDEX = -1;
+    
+    // Reset UI
+    document.getElementById('correctCount').textContent = '0';
+    document.getElementById('incorrectCount').textContent = '0';
+    document.getElementById('settingsModal').classList.remove('open');
+    document.getElementById('splashScreen').style.display = 'flex';
+    document.getElementById('flashcardContainer').style.display = 'none';
+    document.getElementById('controlsGroup').style.display = 'none';
+}
+
 // Initialize UI state
 function showFlashcardUI() {
     document.getElementById('splashScreen').style.display = 'none';
@@ -34,6 +80,8 @@ document.getElementById('fileInput').addEventListener('change', function() {
                 const csvData = data.split("\n");
                 parseCsvData(csvData);
             }
+            // Save to local storage after loading
+            saveToLocalStorage();
             // Show flashcard UI and close menu
             showFlashcardUI();
             closeMenu();
@@ -202,6 +250,7 @@ function updateCard(isCorrect) {
             parseInt(document.getElementById("incorrectCount").textContent, 10) + 1;
     }
     
+    saveToLocalStorage();
     selectAndDisplayNextCard();
 }
 
@@ -214,6 +263,7 @@ function markAsSeen() {
         card.history.push('seen');
     }
     
+    saveToLocalStorage();
     selectAndDisplayNextCard();
 }
 
@@ -255,6 +305,13 @@ document.getElementById('closeSettingsModal').addEventListener('click', function
 document.getElementById('markAsSeenToggle').addEventListener('change', function() {
     SHOW_MARK_AS_SEEN = this.checked;
     updateButtonVisibility();
+    saveToLocalStorage();
+});
+
+document.getElementById('clearDataBtn').addEventListener('click', function() {
+    if (confirm('Are you sure you want to clear all flashcard data? This cannot be undone.')) {
+        clearSavedData();
+    }
 });
 
 function updateButtonVisibility() {

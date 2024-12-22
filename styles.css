@@ -498,6 +498,33 @@ input:checked + .toggle-slider:before {
     font-size: 20px;
 }
 
+.danger-button {
+    background-color: #dc3545 !important;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.3s;
+}
+
+.danger-button:hover {
+    background-color: #c82333 !important;
+}
+
+.danger-button i {
+    font-size: 16px;
+}
+
+.setting-item + .setting-item {
+    border-top: 1px solid #eee;
+    margin-top: 15px;
+    padding-top: 15px;
+}
+
 @keyframes pulse {
     0% {
         transform: scale(1);
