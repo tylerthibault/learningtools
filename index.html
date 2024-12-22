@@ -3,10 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flashcards App</title>
+    <title>Flashcards</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
+    <div class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+    </div>
+
+    <div class="side-menu" id="sideMenu">
+        <div class="side-menu-header">
+            <h2>Menu</h2>
+            <button class="close-menu" id="closeMenu">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="menu-items">
+            <div class="file-input-section">
+                <button class="menu-item" id="uploadBtn">
+                    <i class="fas fa-file-upload"></i>
+                    Upload Flashcards
+                </button>
+                <input type="file" id="fileInput" accept=".csv,.json" style="display: none;">
+                <p class="file-info">Supports CSV or JSON files</p>
+            </div>
+            <button class="menu-item" id="settingsBtn">
+                <i class="fas fa-cog"></i>
+                Settings
+            </button>
+        </div>
+    </div>
+
+    <div class="overlay" id="menuOverlay"></div>
+
     <div class="scoreboard">
         <h2>Scoreboard</h2>
         <p>
@@ -18,11 +48,6 @@
     </div>
     <div class="container">
         <h1>Flashcards</h1>
-        <div class="file-input-section">
-            <input type="file" id="fileInput" accept=".csv,.json">
-            <p>Upload a CSV or JSON file containing flashcards</p>
-        </div>
-        
         <div class="flashcard-container" id="flashcardContainer">
             <div class="flashcard" id="currentCard">
                 <div class="flashcard-inner">
@@ -56,6 +81,31 @@
             </div>
         </div>
     </div>
+    
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button class="close-modal" id="closeSettingsModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <label for="markAsSeenToggle">Initial Card Review</label>
+                        <p class="setting-description">Allow marking new cards as "seen" before counting them as incorrect</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="markAsSeenToggle" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script src="script.js"></script>
 </body>
 </html>

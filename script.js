@@ -3,20 +3,28 @@ const MASTERY_THRESHOLD = 3; // Number of correct answers needed to master a car
 let FLASHCARDS = [];
 let CURRENT_SIDE = 0;
 let CURRENT_CARD_INDEX = -1;
+let SHOW_MARK_AS_SEEN = true; // Default setting
 
-document.getElementById("fileInput").addEventListener("change", function() {
+// File upload functionality
+document.getElementById('uploadBtn').addEventListener('click', function() {
+    document.getElementById('fileInput').click();
+});
+
+document.getElementById('fileInput').addEventListener('change', function() {
     if (this.files.length > 0) {
-        var file = this.files[0];
-        var reader = new FileReader();
+        const file = this.files[0];
+        const reader = new FileReader();
         reader.onload = function(e) {
-            var data = e.target.result;
+            const data = e.target.result;
             if (file.type === "application/json") {
-                var jsonData = JSON.parse(data);
+                const jsonData = JSON.parse(data);
                 parseJsonData(jsonData);
             } else if (file.type === "text/csv") {
-                var csvData = data.split("\n");
+                const csvData = data.split("\n");
                 parseCsvData(csvData);
             }
+            // Close the menu after file is loaded
+            closeMenu();
         };
         reader.readAsText(file);
     }
@@ -135,9 +143,7 @@ function displayFlashcard(flashcard) {
         document.getElementById('cardCorrectCountBack').textContent = flashcard.correctCount;
         document.getElementById('cardIncorrectCountBack').textContent = flashcard.incorrectCount;
         
-        // Show/hide appropriate buttons based on hasBeenSeen status
-        document.getElementById('seenBtn').style.display = flashcard.hasBeenSeen ? 'none' : 'inline-block';
-        document.getElementById('incorrectBtn').style.display = flashcard.hasBeenSeen ? 'inline-block' : 'none';
+        updateButtonVisibility();
         
         // Reset the flip state when displaying a new card
         CURRENT_SIDE = 0;
@@ -210,3 +216,47 @@ document.getElementById("seenBtn").addEventListener("click", function() {
 document.getElementById("incorrectBtn").addEventListener("click", function() {
     updateCard(false);
 });
+
+// Menu functionality
+document.getElementById('menuToggle').addEventListener('click', function() {
+    document.getElementById('sideMenu').classList.add('open');
+    document.getElementById('menuOverlay').classList.add('open');
+});
+
+document.getElementById('closeMenu').addEventListener('click', closeMenu);
+document.getElementById('menuOverlay').addEventListener('click', closeMenu);
+
+function closeMenu() {
+    document.getElementById('sideMenu').classList.remove('open');
+    document.getElementById('menuOverlay').classList.remove('open');
+}
+
+document.getElementById('settingsBtn').addEventListener('click', function() {
+    document.getElementById('settingsModal').classList.add('open');
+    closeMenu(); // Close the side menu when opening settings
+});
+
+document.getElementById('closeSettingsModal').addEventListener('click', function() {
+    document.getElementById('settingsModal').classList.remove('open');
+});
+
+document.getElementById('markAsSeenToggle').addEventListener('change', function() {
+    SHOW_MARK_AS_SEEN = this.checked;
+    updateButtonVisibility();
+});
+
+function updateButtonVisibility() {
+    const seenBtn = document.getElementById('seenBtn');
+    const incorrectBtn = document.getElementById('incorrectBtn');
+    const card = FLASHCARDS[CURRENT_CARD_INDEX];
+    
+    if (!card) return;
+    
+    if (SHOW_MARK_AS_SEEN && !card.hasBeenSeen) {
+        seenBtn.style.display = 'inline-block';
+        incorrectBtn.style.display = 'none';
+    } else {
+        seenBtn.style.display = 'none';
+        incorrectBtn.style.display = 'inline-block';
+    }
+}
