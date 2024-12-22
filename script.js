@@ -5,8 +5,19 @@ let CURRENT_SIDE = 0;
 let CURRENT_CARD_INDEX = -1;
 let SHOW_MARK_AS_SEEN = true; // Default setting
 
+// Initialize UI state
+function showFlashcardUI() {
+    document.getElementById('splashScreen').style.display = 'none';
+    document.getElementById('flashcardContainer').style.display = 'block';
+    document.getElementById('controlsGroup').style.display = 'flex';
+}
+
 // File upload functionality
 document.getElementById('uploadBtn').addEventListener('click', function() {
+    document.getElementById('fileInput').click();
+});
+
+document.getElementById('splashUploadBtn').addEventListener('click', function() {
     document.getElementById('fileInput').click();
 });
 
@@ -23,7 +34,8 @@ document.getElementById('fileInput').addEventListener('change', function() {
                 const csvData = data.split("\n");
                 parseCsvData(csvData);
             }
-            // Close the menu after file is loaded
+            // Show flashcard UI and close menu
+            showFlashcardUI();
             closeMenu();
         };
         reader.readAsText(file);

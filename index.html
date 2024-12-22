@@ -46,9 +46,24 @@
             Incorrect answers: <span id="incorrectCount">0</span>
         </p>
     </div>
+    
     <div class="container">
         <h1>Flashcards</h1>
-        <div class="flashcard-container" id="flashcardContainer">
+        
+        <!-- Splash Screen -->
+        <div class="splash-screen" id="splashScreen">
+            <div class="splash-content">
+                <i class="fas fa-brain splash-icon"></i>
+                <h2>Welcome to Flashcards!</h2>
+                <p>Get started by loading your flashcard set</p>
+                <button class="splash-upload-btn" id="splashUploadBtn">
+                    <i class="fas fa-file-upload"></i>
+                    Load Flashcards
+                </button>
+            </div>
+        </div>
+
+        <div class="flashcard-container" id="flashcardContainer" style="display: none;">
             <div class="flashcard" id="currentCard">
                 <div class="flashcard-inner">
                     <div class="flashcard-front">
@@ -69,7 +84,7 @@
             </div>
         </div>
         
-        <div class="controls-group">
+        <div class="controls-group" style="display: none;" id="controlsGroup">
             <div class="controls">
                 <button id="flipBtn">Flip</button>
                 <button id="nextBtn">Next</button>
