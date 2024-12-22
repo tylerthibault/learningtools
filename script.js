@@ -4,11 +4,181 @@ let FLASHCARDS = [];
 let CURRENT_SIDE = 0;
 let CURRENT_CARD_INDEX = -1;
 let SHOW_MARK_AS_SEEN = true; // Default setting
+let teams = [];
+let currentTeamIndex = 0;
 
-// Load saved data on startup
+// Initialize all event listeners and load data
 document.addEventListener('DOMContentLoaded', function() {
+    // Load saved data
     loadSavedData();
+    loadTeams();
+    
+    // Initialize team-related event listeners
+    initializeTeamControls();
+    
+    // Initialize other event listeners
+    initializeFlashcardControls();
+    
+    // Initialize menu controls
+    initializeMenuControls();
 });
+
+function initializeMenuControls() {
+    // Get menu elements
+    const menuToggle = document.querySelector('#menuToggle');
+    const closeMenuBtn = document.querySelector('#closeMenu');
+    const menuOverlay = document.querySelector('#menuOverlay');
+    const settingsBtn = document.querySelector('#settingsBtn');
+    const settingsModal = document.querySelector('#settingsModal');
+    const closeSettingsBtn = document.querySelector('#closeSettingsModal');
+
+    // Menu toggle
+    if (menuToggle) {
+        menuToggle.addEventListener('click', openMenu);
+    } else {
+        console.error('Menu toggle button not found');
+    }
+
+    // Close menu button
+    if (closeMenuBtn) {
+        closeMenuBtn.addEventListener('click', closeMenu);
+    } else {
+        console.error('Close menu button not found');
+    }
+
+    // Menu overlay
+    if (menuOverlay) {
+        menuOverlay.addEventListener('click', closeMenu);
+    } else {
+        console.error('Menu overlay not found');
+    }
+
+    // Settings button
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', () => {
+            settingsModal.classList.add('open');
+            closeMenu();
+        });
+    } else {
+        console.error('Settings button not found');
+    }
+
+    // Close settings button
+    if (closeSettingsBtn) {
+        closeSettingsBtn.addEventListener('click', () => {
+            settingsModal.classList.remove('open');
+        });
+    } else {
+        console.error('Close settings button not found');
+    }
+}
+
+function initializeTeamControls() {
+    // Team Modal Controls
+    const setupTeamsBtn = document.getElementById('setupTeamsBtn');
+    const teamModal = document.getElementById('teamModal');
+    const closeTeamModalBtn = document.getElementById('closeTeamModal');
+    const addTeamBtn = document.getElementById('addTeamBtn');
+    const teamNameInput = document.getElementById('teamNameInput');
+    const teamColorInput = document.getElementById('teamColorInput');
+
+    setupTeamsBtn.addEventListener('click', function() {
+        teamModal.classList.add('open');
+        closeMenu();
+    });
+
+    closeTeamModalBtn.addEventListener('click', function() {
+        teamModal.classList.remove('open');
+    });
+
+    // Add team functionality
+    addTeamBtn.addEventListener('click', function() {
+        const teamName = teamNameInput.value.trim();
+        const teamColor = teamColorInput.value;
+        
+        if (teamName) {
+            teams.push({
+                name: teamName,
+                color: teamColor,
+                score: 0,
+                currentCard: -1
+            });
+            teamNameInput.value = '';
+            updateTeamList();
+            saveTeams();
+        }
+    });
+}
+
+function initializeFlashcardControls() {
+    const fileInput = document.getElementById('fileInput');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const splashUploadBtn = document.getElementById('splashUploadBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const flipBtn = document.getElementById('flipBtn');
+    const correctBtn = document.getElementById('correctBtn');
+    const seenBtn = document.getElementById('seenBtn');
+    const incorrectBtn = document.getElementById('incorrectBtn');
+    const markAsSeenToggle = document.getElementById('markAsSeenToggle');
+    const clearDataBtn = document.getElementById('clearDataBtn');
+
+    // File upload functionality
+    uploadBtn.addEventListener('click', function() {
+        fileInput.click();
+    });
+
+    splashUploadBtn.addEventListener('click', function() {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            const file = this.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    FLASHCARDS = parseCsvData(e.target.result);
+                    saveToLocalStorage();
+                    showFlashcardUI();
+                    selectAndDisplayNextCard();
+                } catch (error) {
+                    alert('Error parsing CSV file. Please make sure it is properly formatted.');
+                    console.error('Error parsing CSV:', error);
+                }
+            };
+            
+            reader.onerror = function() {
+                alert('Error reading file');
+            };
+            
+            reader.readAsText(file);
+        }
+    });
+
+    // Button controls
+    nextBtn.addEventListener('click', handleNextCard);
+    flipBtn.addEventListener('click', handleFlipCard);
+    correctBtn.addEventListener('click', function() {
+        updateCard(true);
+    });
+    seenBtn.addEventListener('click', markAsSeen);
+    incorrectBtn.addEventListener('click', function() {
+        updateCard(false);
+    });
+
+    markAsSeenToggle.addEventListener('change', function() {
+        SHOW_MARK_AS_SEEN = this.checked;
+        updateButtonVisibility();
+        saveToLocalStorage();
+    });
+
+    clearDataBtn.addEventListener('click', function() {
+        if (confirm('Are you sure you want to clear all flashcard data? This cannot be undone.')) {
+            clearSavedData();
+        }
+    });
+}
 
 // Local Storage Functions
 function saveToLocalStorage() {
@@ -51,6 +221,26 @@ function clearSavedData() {
     document.getElementById('controlsGroup').style.display = 'none';
 }
 
+// Team Management
+function saveTeams() {
+    const gameState = {
+        teams: teams,
+        currentTeamIndex: currentTeamIndex
+    };
+    localStorage.setItem('flashcardTeams', JSON.stringify(gameState));
+}
+
+function loadTeams() {
+    const savedState = localStorage.getItem('flashcardTeams');
+    if (savedState) {
+        const gameState = JSON.parse(savedState);
+        teams = gameState.teams;
+        currentTeamIndex = gameState.currentTeamIndex;
+        updateTeamList();
+        updateTeamTurn();
+    }
+}
+
 // Initialize UI state
 function showFlashcardUI() {
     document.getElementById('splashScreen').style.display = 'none';
@@ -59,15 +249,7 @@ function showFlashcardUI() {
 }
 
 // File upload functionality
-document.getElementById('uploadBtn').addEventListener('click', function() {
-    document.getElementById('fileInput').click();
-});
-
-document.getElementById('splashUploadBtn').addEventListener('click', function() {
-    document.getElementById('fileInput').click();
-});
-
-document.getElementById('fileInput').addEventListener('change', function() {
+function handleFileUpload() {
     if (this.files.length > 0) {
         const file = this.files[0];
         const reader = new FileReader();
@@ -88,7 +270,7 @@ document.getElementById('fileInput').addEventListener('change', function() {
         };
         reader.readAsText(file);
     }
-});
+}
 
 function parseCsvData(csvData) {
     var flashcards = [];
@@ -99,15 +281,13 @@ function parseCsvData(csvData) {
             flashcards.push(flashcard);
         }
     }
-    FLASHCARDS = flashcards;
-    selectAndDisplayNextCard();
+    return flashcards;
 }
 
 function parseJsonData(jsonData) {
-    FLASHCARDS = jsonData.map(card => 
+    return jsonData.map(card => 
         createFlashcard(card.front || card.term, card.back || card.definition)
     );
-    selectAndDisplayNextCard();
 }
 
 function createFlashcard(front, back) {
@@ -192,45 +372,41 @@ function displayFlashcard(flashcard) {
     const card = document.getElementById('currentCard');
     card.classList.add('changing');
     
-    // Wait for fade out
     setTimeout(() => {
         document.getElementById('frontText').textContent = flashcard.front;
         document.getElementById('backText').textContent = flashcard.back;
         
-        // Update card stats
         document.getElementById('cardCorrectCount').textContent = flashcard.correctCount;
         document.getElementById('cardIncorrectCount').textContent = flashcard.incorrectCount;
         document.getElementById('cardCorrectCountBack').textContent = flashcard.correctCount;
         document.getElementById('cardIncorrectCountBack').textContent = flashcard.incorrectCount;
         
         updateButtonVisibility();
+        updateTeamTurn();
         
-        // Reset the flip state when displaying a new card
         CURRENT_SIDE = 0;
         card.classList.remove('flipped');
         
-        // Wait a tiny bit to ensure flip reset is done
         setTimeout(() => {
             card.classList.remove('changing');
         }, 50);
         
-        // Update last seen timestamp
         flashcard.lastSeen = Date.now();
     }, 100);
 }
 
-document.getElementById("nextBtn").addEventListener("click", function() {
+function handleNextCard() {
     if (FLASHCARDS.length === 0) return;
     selectAndDisplayNextCard();
-});
+}
 
-document.getElementById("flipBtn").addEventListener("click", function() {
+function handleFlipCard() {
     if (FLASHCARDS.length === 0) return;
     
     CURRENT_SIDE = (CURRENT_SIDE + 1) % 2;
     const card = document.getElementById('currentCard');
     card.classList.toggle('flipped');
-});
+}
 
 function updateCard(isCorrect) {
     if (FLASHCARDS.length === 0 || CURRENT_CARD_INDEX === -1) return;
@@ -243,14 +419,26 @@ function updateCard(isCorrect) {
         card.history.push('correct');
         document.getElementById("correctCount").textContent = 
             parseInt(document.getElementById("correctCount").textContent, 10) + 1;
+        
+        // Update team score
+        if (teams.length > 0) {
+            teams[currentTeamIndex].score++;
+            nextTeamTurn();
+        }
     } else {
         card.incorrectCount++;
         card.history.push('incorrect');
         document.getElementById("incorrectCount").textContent = 
             parseInt(document.getElementById("incorrectCount").textContent, 10) + 1;
+        
+        // Move to next team on incorrect answer
+        if (teams.length > 0) {
+            nextTeamTurn();
+        }
     }
     
     saveToLocalStorage();
+    saveTeams();
     selectAndDisplayNextCard();
 }
 
@@ -267,52 +455,81 @@ function markAsSeen() {
     selectAndDisplayNextCard();
 }
 
-document.getElementById("correctBtn").addEventListener("click", function() {
-    updateCard(true);
-});
-
-document.getElementById("seenBtn").addEventListener("click", function() {
-    markAsSeen();
-});
-
-document.getElementById("incorrectBtn").addEventListener("click", function() {
-    updateCard(false);
-});
-
 // Menu functionality
-document.getElementById('menuToggle').addEventListener('click', function() {
-    document.getElementById('sideMenu').classList.add('open');
-    document.getElementById('menuOverlay').classList.add('open');
-});
-
-document.getElementById('closeMenu').addEventListener('click', closeMenu);
-document.getElementById('menuOverlay').addEventListener('click', closeMenu);
-
 function closeMenu() {
-    document.getElementById('sideMenu').classList.remove('open');
-    document.getElementById('menuOverlay').classList.remove('open');
+    const sideMenu = document.getElementById('sideMenu');
+    const menuOverlay = document.getElementById('menuOverlay');
+    sideMenu.classList.remove('open');
+    menuOverlay.classList.remove('open');
 }
 
-document.getElementById('settingsBtn').addEventListener('click', function() {
-    document.getElementById('settingsModal').classList.add('open');
-    closeMenu(); // Close the side menu when opening settings
-});
+function openMenu() {
+    console.log("Opening menu...");
+    const sideMenu = document.getElementById('sideMenu');
+    const menuOverlay = document.getElementById('menuOverlay');
+    sideMenu.classList.add('open');
+    menuOverlay.classList.add('open');
+}
 
-document.getElementById('closeSettingsModal').addEventListener('click', function() {
-    document.getElementById('settingsModal').classList.remove('open');
-});
+// Team Modal Controls
+function updateTeamList() {
+    const teamList = document.getElementById('teamList');
+    teamList.innerHTML = '';
+    
+    teams.forEach((team, index) => {
+        const teamItem = document.createElement('div');
+        teamItem.className = 'team-item' + (index === currentTeamIndex ? ' current-turn' : '');
+        if (index === currentTeamIndex) {
+            teamItem.style.borderLeftColor = team.color;
+        }
+        
+        teamItem.innerHTML = `
+            <div class="team-info">
+                <div class="team-color" style="background-color: ${team.color}"></div>
+                <span>${team.name} (Score: ${team.score})</span>
+            </div>
+            <button class="remove-btn" data-index="${index}">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+        teamList.appendChild(teamItem);
+        
+        // Add remove button listener
+        const removeBtn = teamItem.querySelector('.remove-btn');
+        removeBtn.addEventListener('click', function() {
+            teams.splice(index, 1);
+            if (currentTeamIndex >= teams.length) {
+                currentTeamIndex = 0;
+            }
+            updateTeamList();
+            updateTeamTurn();
+            saveTeams();
+        });
+    });
+}
 
-document.getElementById('markAsSeenToggle').addEventListener('change', function() {
-    SHOW_MARK_AS_SEEN = this.checked;
-    updateButtonVisibility();
-    saveToLocalStorage();
-});
+function updateTeamTurn() {
+    if (teams.length === 0) return;
+    
+    const currentTeam = teams[currentTeamIndex];
+    const flashcard = document.getElementById('currentCard');
+    
+    // Remove previous team's style
+    flashcard.classList.remove('active-team');
+    flashcard.style.boxShadow = '';
+    
+    // Add current team's style
+    flashcard.classList.add('active-team');
+    flashcard.style.boxShadow = `0 0 0 4px ${currentTeam.color}`;
+}
 
-document.getElementById('clearDataBtn').addEventListener('click', function() {
-    if (confirm('Are you sure you want to clear all flashcard data? This cannot be undone.')) {
-        clearSavedData();
-    }
-});
+function nextTeamTurn() {
+    if (teams.length === 0) return;
+    currentTeamIndex = (currentTeamIndex + 1) % teams.length;
+    updateTeamList();
+    updateTeamTurn();
+    saveTeams();
+}
 
 function updateButtonVisibility() {
     const seenBtn = document.getElementById('seenBtn');

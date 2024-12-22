@@ -32,6 +32,10 @@
                 <i class="fas fa-cog"></i>
                 Settings
             </button>
+            <button class="menu-item" id="setupTeamsBtn">
+                <i class="fas fa-users"></i>
+                Setup Teams
+            </button>
         </div>
     </div>
 
@@ -127,6 +131,33 @@
                         <i class="fas fa-trash-alt"></i>
                         Clear Data
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Team Setup Modal -->
+    <div class="modal" id="teamModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Team Setup</h2>
+                <button class="close-modal" id="closeTeamModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="team-input-section">
+                    <div class="input-group">
+                        <input type="text" id="teamNameInput" placeholder="Enter team name">
+                        <input type="color" id="teamColorInput" value="#007bff" title="Choose team color">
+                        <button class="primary-button" id="addTeamBtn">
+                            <i class="fas fa-plus"></i>
+                            Add Team
+                        </button>
+                    </div>
+                </div>
+                <div class="team-list" id="teamList">
+                    <!-- Teams will be added here dynamically -->
                 </div>
             </div>
         </div>
