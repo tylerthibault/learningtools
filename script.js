@@ -9,6 +9,11 @@ let currentTeamIndex = 0;
 
 // Initialize all event listeners and load data
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize teams array
+    if (!teams) {
+        teams = [];
+    }
+    
     // Load saved data
     loadSavedData();
     loadTeams();
@@ -131,30 +136,7 @@ function initializeFlashcardControls() {
         fileInput.click();
     });
 
-    fileInput.addEventListener('change', function() {
-        if (this.files.length > 0) {
-            const file = this.files[0];
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                try {
-                    FLASHCARDS = parseCsvData(e.target.result);
-                    saveToLocalStorage();
-                    showFlashcardUI();
-                    selectAndDisplayNextCard();
-                } catch (error) {
-                    alert('Error parsing CSV file. Please make sure it is properly formatted.');
-                    console.error('Error parsing CSV:', error);
-                }
-            };
-            
-            reader.onerror = function() {
-                alert('Error reading file');
-            };
-            
-            reader.readAsText(file);
-        }
-    });
+    fileInput.addEventListener('change', handleFileUpload);
 
     // Button controls
     nextBtn.addEventListener('click', handleNextCard);
@@ -223,6 +205,9 @@ function clearSavedData() {
 
 // Team Management
 function saveTeams() {
+    if (!teams) {
+        teams = [];
+    }
     const gameState = {
         teams: teams,
         currentTeamIndex: currentTeamIndex
@@ -233,11 +218,25 @@ function saveTeams() {
 function loadTeams() {
     const savedState = localStorage.getItem('flashcardTeams');
     if (savedState) {
-        const gameState = JSON.parse(savedState);
-        teams = gameState.teams;
-        currentTeamIndex = gameState.currentTeamIndex;
-        updateTeamList();
-        updateTeamTurn();
+        try {
+            const gameState = JSON.parse(savedState);
+            teams = Array.isArray(gameState.teams) ? gameState.teams : [];
+            currentTeamIndex = gameState.currentTeamIndex || 0;
+            if (currentTeamIndex >= teams.length) {
+                currentTeamIndex = 0;
+            }
+            updateTeamList();
+            if (teams.length > 0) {
+                updateTeamTurn();
+            }
+        } catch (error) {
+            console.error('Error loading teams:', error);
+            teams = [];
+            currentTeamIndex = 0;
+        }
+    } else {
+        teams = [];
+        currentTeamIndex = 0;
     }
 }
 
@@ -249,45 +248,75 @@ function showFlashcardUI() {
 }
 
 // File upload functionality
-function handleFileUpload() {
-    if (this.files.length > 0) {
-        const file = this.files[0];
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const data = e.target.result;
+function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            let parsedCards;
             if (file.type === "application/json") {
-                const jsonData = JSON.parse(data);
-                parseJsonData(jsonData);
-            } else if (file.type === "text/csv") {
-                const csvData = data.split("\n");
-                parseCsvData(csvData);
+                const jsonData = JSON.parse(e.target.result);
+                parsedCards = parseJsonData(jsonData);
+            } else {
+                // Assume CSV if not JSON
+                const csvData = e.target.result.split('\n');
+                parsedCards = parseCsvData(csvData);
             }
-            // Save to local storage after loading
-            saveToLocalStorage();
-            // Show flashcard UI and close menu
-            showFlashcardUI();
-            closeMenu();
-        };
-        reader.readAsText(file);
-    }
+            
+            if (parsedCards && parsedCards.length > 0) {
+                FLASHCARDS = parsedCards;
+                saveToLocalStorage();
+                showFlashcardUI();
+                selectAndDisplayNextCard();
+            } else {
+                throw new Error('No valid cards found in file');
+            }
+        } catch (error) {
+            console.error('Error parsing file:', error);
+            alert('Error parsing file. Please make sure it is properly formatted.');
+        }
+    };
+    
+    reader.onerror = function() {
+        console.error('Error reading file');
+        alert('Error reading file');
+    };
+    
+    reader.readAsText(file);
 }
 
 function parseCsvData(csvData) {
-    var flashcards = [];
-    for (var i = 1; i < csvData.length; i++) {
-        var parts = csvData[i].split(",");
+    if (!csvData || csvData.length < 2) return [];
+    
+    const flashcards = [];
+    // Skip header row and process each line
+    for (let i = 1; i < csvData.length; i++) {
+        const line = csvData[i].trim();
+        if (!line) continue; // Skip empty lines
+        
+        const parts = line.split(',').map(part => part.trim());
         if (parts.length >= 2) {
-            var flashcard = createFlashcard(parts[0], parts[1]);
+            const flashcard = createFlashcard(parts[0], parts[1]);
             flashcards.push(flashcard);
         }
     }
+    console.log('Parsed CSV cards:', flashcards); // Debug log
     return flashcards;
 }
 
 function parseJsonData(jsonData) {
-    return jsonData.map(card => 
-        createFlashcard(card.front || card.term, card.back || card.definition)
-    );
+    if (!Array.isArray(jsonData)) return [];
+    
+    const flashcards = jsonData.map(card => {
+        const front = card.front || card.term || '';
+        const back = card.back || card.definition || '';
+        return createFlashcard(front, back);
+    }).filter(card => card.front && card.back); // Only keep cards with both front and back
+    
+    console.log('Parsed JSON cards:', flashcards); // Debug log
+    return flashcards;
 }
 
 function createFlashcard(front, back) {
@@ -474,7 +503,14 @@ function openMenu() {
 // Team Modal Controls
 function updateTeamList() {
     const teamList = document.getElementById('teamList');
+    if (!teamList) return;
+    
     teamList.innerHTML = '';
+    
+    if (!teams) {
+        teams = [];
+        return;
+    }
     
     teams.forEach((team, index) => {
         const teamItem = document.createElement('div');
@@ -509,10 +545,13 @@ function updateTeamList() {
 }
 
 function updateTeamTurn() {
-    if (teams.length === 0) return;
+    if (!teams || teams.length === 0) return;
+    
+    const flashcard = document.getElementById('currentCard');
+    if (!flashcard) return;
     
     const currentTeam = teams[currentTeamIndex];
-    const flashcard = document.getElementById('currentCard');
+    if (!currentTeam) return;
     
     // Remove previous team's style
     flashcard.classList.remove('active-team');
@@ -524,7 +563,7 @@ function updateTeamTurn() {
 }
 
 function nextTeamTurn() {
-    if (teams.length === 0) return;
+    if (!teams || teams.length === 0) return;
     currentTeamIndex = (currentTeamIndex + 1) % teams.length;
     updateTeamList();
     updateTeamTurn();
