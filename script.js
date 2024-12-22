@@ -36,12 +36,38 @@ function initializeMenuControls() {
     const settingsBtn = document.querySelector('#settingsBtn');
     const settingsModal = document.querySelector('#settingsModal');
     const closeSettingsBtn = document.querySelector('#closeSettingsModal');
+    const startOverBtn = document.querySelector('#startOverBtn');
 
     // Menu toggle
     if (menuToggle) {
         menuToggle.addEventListener('click', openMenu);
     } else {
         console.error('Menu toggle button not found');
+    }
+
+    // Start Over button
+    if (startOverBtn) {
+        startOverBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to start over? This will clear all flashcards, progress, and teams.')) {
+                // Clear all data
+                localStorage.clear();
+                FLASHCARDS = [];
+                CURRENT_CARD_INDEX = -1;
+                SHOW_MARK_AS_SEEN = true;
+                teams = [];
+                currentTeamIndex = 0;
+
+                // Reset UI
+                document.getElementById('correctCount').textContent = '0';
+                document.getElementById('incorrectCount').textContent = '0';
+                document.getElementById('flashcardContainer').style.display = 'none';
+                document.getElementById('controlsGroup').style.display = 'none';
+                document.getElementById('splashScreen').style.display = 'flex';
+
+                // Close menu
+                closeMenu();
+            }
+        });
     }
 
     // Close menu button
@@ -245,6 +271,13 @@ function showFlashcardUI() {
     document.getElementById('splashScreen').style.display = 'none';
     document.getElementById('flashcardContainer').style.display = 'block';
     document.getElementById('controlsGroup').style.display = 'flex';
+    
+    // Add team background div if it doesn't exist
+    if (!document.querySelector('.team-background')) {
+        const background = document.createElement('div');
+        background.className = 'team-background';
+        document.body.appendChild(background);
+    }
 }
 
 // File upload functionality
@@ -545,10 +578,23 @@ function updateTeamList() {
 }
 
 function updateTeamTurn() {
-    if (!teams || teams.length === 0) return;
+    if (!teams || teams.length < 2) {
+        // Remove team styling if there's only one or no teams
+        const flashcard = document.getElementById('currentCard');
+        const background = document.querySelector('.team-background');
+        if (flashcard) {
+            flashcard.classList.remove('active-team');
+            flashcard.style.boxShadow = '';
+        }
+        if (background) {
+            background.style.backgroundColor = 'transparent';
+        }
+        return;
+    }
     
     const flashcard = document.getElementById('currentCard');
-    if (!flashcard) return;
+    const background = document.querySelector('.team-background');
+    if (!flashcard || !background) return;
     
     const currentTeam = teams[currentTeamIndex];
     if (!currentTeam) return;
@@ -560,6 +606,7 @@ function updateTeamTurn() {
     // Add current team's style
     flashcard.classList.add('active-team');
     flashcard.style.boxShadow = `0 0 0 4px ${currentTeam.color}`;
+    background.style.backgroundColor = currentTeam.color;
 }
 
 function nextTeamTurn() {

@@ -293,6 +293,15 @@ p {
     background-color: #f8f9fa;
 }
 
+.danger-menu-item {
+    color: #dc3545 !important;
+}
+
+.danger-menu-item:hover {
+    background-color: #dc3545 !important;
+    color: white !important;
+}
+
 .menu-item i {
     width: 20px;
 }
@@ -639,7 +648,19 @@ input:checked + .toggle-slider:before {
 }
 
 .flashcard.active-team {
-    transition: box-shadow 0.3s ease;
+    transition: box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+.team-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0.1;
+    transition: background-color 0.3s ease;
+    pointer-events: none;
+    z-index: -1;
 }
 
 .team-item.current-turn {
